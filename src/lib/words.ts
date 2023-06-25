@@ -13,7 +13,7 @@ import { NOT_CONTAINED_MESSAGE, WRONG_SPOT_MESSAGE } from '../constants/strings'
 import { VALID_GUESSES } from '../constants/validGuesses'
 import { WORDS } from '../constants/wordlist'
 import { getToday } from './dateutils'
-import { getGuessStatuses } from './statuses'
+import { getGuessStatuses,CharStatus } from './statuses'
 
 // 1 January 2022 Game Epoch
 export const firstGameDate = new Date(2022, 0)
@@ -178,3 +178,59 @@ export const getIsLatestGame = () => {
 
 export const { solution, solutionGameDate, solutionIndex, tomorrow } =
   getSolution(getGameDate())
+  
+let wordlist = [...WORDS]; // Create a copy of WORDS as the initial WORDLIST
+
+// Filter word list based on GUESS and count the valid WORDs
+export const getValidAnswers = (guess: string) => {
+  const statuses: CharStatus[] = getGuessStatuses(solution, guess);
+  const guessObj = {
+    guessLower: guess.toLowerCase(),
+    charCount: {} as { [key: string]: number },
+    statuses: statuses,
+  };    
+    
+  // Count characters
+  const countCharacters = (input: string, isGuess: boolean): { [key: string]: number } => {
+    const charCount: { [char: string]: number } = {};
+    for (let i = 0; i < 5; i++) {
+      const char = input[i];
+      if (charCount.hasOwnProperty(char)) {
+        charCount[char] += 1;
+      } else {
+        charCount[char] = 1;
+      }
+      if (isGuess && statuses[i] === 'absent') {
+          charCount[char]--;
+      }
+    }
+    return charCount;
+  };
+
+  guessObj.charCount = countCharacters(guessObj.guessLower, true);
+
+  // Loop through WORDLIST
+  wordlist = wordlist.filter((word) => {
+    const wordLower = word.toLowerCase();
+    const wordCount = countCharacters(wordLower, false);
+
+    const isWordValid = statuses.every((status, index) => {
+      const guessChar = guessObj.guessLower[index];
+      const wordChar = wordLower[index];
+
+      return (
+        (status === 'correct' && guessChar === wordChar) ||
+        (status === 'present' && 
+          guessChar !== wordChar && 
+          wordCount[guessChar] >= guessObj.charCount[guessChar]) ||
+        (status === 'absent' && guessChar !== wordChar &&
+          (wordCount[guessChar] <= guessObj.charCount[guessChar] 
+            || wordCount[guessChar] === undefined))
+      );
+    });
+    return isWordValid;
+  });
+  console.log(wordlist);
+  console.log(`End Wordlist Count: ${wordlist.length}`);
+  return wordlist.length;
+};

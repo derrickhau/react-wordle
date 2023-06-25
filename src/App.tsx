@@ -46,6 +46,7 @@ import {
   findFirstUnusedReveal,
   getGameDate,
   getIsLatestGame,
+  getValidAnswers,
   isWinningWord,
   isWordInWordList,
   setGameDate,
@@ -269,6 +270,8 @@ function App() {
         })
       }
     }
+
+    getValidAnswers(currentGuess)
   }
 
   return (

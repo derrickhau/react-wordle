@@ -27,7 +27,6 @@ export const getStatuses = (
       }
     })
   })
-
   return charObj
 }
 
@@ -74,6 +73,5 @@ export const getGuessStatuses = (
       return
     }
   })
-
   return statuses
 }
